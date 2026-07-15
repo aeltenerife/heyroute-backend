@@ -139,7 +139,7 @@ NGINXEOF
 
 ln -sf /etc/nginx/sites-available/heyroute /etc/nginx/sites-enabled/
 nginx -t
-systemctl restart nginx
+systemctl restart nginx || { echo "Nginx failed to start! Fetching logs..."; journalctl -xeu nginx.service --no-pager | tail -n 20; exit 1; }
 echo "  → Nginx configured and restarted"
 
 # --- Step 7: Verify ---
