@@ -31,10 +31,10 @@ class SessionState:
 SESSIONS = {}
 
 # --- ASR server handoff configuration ---
-ASR_URL = "http://172.16.3.217:80/transcribe"
-ASR_API_KEY = os.getenv("ASR_API_KEY")
+ASR_URL = os.getenv("REMOTE_ASR_URL", "http://172.16.3.217:80").rstrip("/") + "/transcribe"
+ASR_API_KEY = os.getenv("REMOTE_ASR_API_KEY")
 if not ASR_API_KEY:
-	raise ValueError("CRITICAL ERROR: ASR_API_KEY is missing from the environment variables.")
+	raise ValueError("CRITICAL ERROR: REMOTE_ASR_API_KEY is missing from the environment variables.")
 
 app = FastAPI(title="HeyRoute API")
 
