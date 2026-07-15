@@ -56,3 +56,9 @@ async def resolve_semantic_location(db: AsyncSession, user_id: str, destination_
     if saved_place:
         return {"lat": saved_place.latitude, "lng": saved_place.longitude}
     return None
+
+async def load_polygons(road_name: str):
+    return None
+
+async def store_polygons(road_name: str, multi_poly):
+    pass

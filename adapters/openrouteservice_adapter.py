@@ -20,7 +20,7 @@ from typing import List
 from shapely.geometry import LineString, MultiPolygon
 from collections import Counter
 from adapters.adapter import APIAdapter
-from db import load_polygons, store_polygons
+from db_utils import load_polygons, store_polygons
 
 # OpenStreetMap Overpass API endpoint for fetching road geometries and nearby features
 OVERPASS_URL = "http://overpass-api.de/api/interpreter"

@@ -24,7 +24,7 @@ echo "[2/7] Cloning heyroute-backend repo ($BRANCH_NAME branch)..."
 cd /root
 if [ -d "heyroute-backend" ]; then
     echo "  → heyroute-backend directory already exists, pulling latest..."
-    cd heyroute-amiel/heyroute-backend
+    cd heyroute-backend
     git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
     git fetch --all
     git checkout $BRANCH_NAME
@@ -139,7 +139,7 @@ NGINXEOF
 
 ln -sf /etc/nginx/sites-available/heyroute /etc/nginx/sites-enabled/
 nginx -t
-systemctl restart nginx || { echo "Nginx failed to start! Fetching logs..."; journalctl -xeu nginx.service --no-pager | tail -n 20; exit 1; }
+systemctl restart nginx || { echo "Nginx failed to start! Fetching actual error log..."; cat /var/log/nginx/error.log | tail -n 20; exit 1; }
 echo "  → Nginx configured and restarted"
 
 # --- Step 7: Verify ---

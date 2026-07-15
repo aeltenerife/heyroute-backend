@@ -157,7 +157,7 @@ async def directions(request: Request, session_id: str=Header(None, alias='X-Ses
 '\nMain API endpoint of the HeyRoute App.\n\n1. Managers user session lifecycle\n2. Processes voice input (transcript)\n3. Performas semantic place resolution\n4. Detects user intent using GPT\n5. Handles various intents:\n    - Clarifications\n    - Trip setup\n    - Route generation\n    - Preference learning\n    - Navigation execution\n\nReturns conversational response and route data.\n'
 
 @router.post('/heyroute/')
-async def heyroute(payload: TranscriptRequest, user_id: str=Header(None, alias='X-User-ID'), session_id: str=Header(None, alias='X-Session-ID')):
+async def heyroute(payload: TranscriptRequest, user_id: str=Header(None, alias='X-User-ID'), session_id: str=Header(None, alias='X-Session-ID'), db: AsyncSession = Depends(get_db)):
     try:
         if session_id not in SESSIONS:
             SESSIONS[session_id] = SessionState()
@@ -340,13 +340,12 @@ async def heyroute(payload: TranscriptRequest, user_id: str=Header(None, alias='
                 destination = state.semantic_context['destination_label']
             else:
                 destination = state.final_gpt_response['destination']
+            most_avoided_road, most_used_road, most_preferred_option = await check_user_preferences(db, user_id, destination)
             if state.pending_preference == 'route_option':
-                most_preferred_option = await load_most_preferred_option(user_id, destination)
                 params['option'] = most_preferred_option
                 preference_value = most_preferred_option
                 state.current_route_params['option'] = most_preferred_option
             elif state.pending_preference == 'avoid':
-                most_avoided_road = await load_most_avoided_road(user_id, destination)
                 preference_value = most_avoided_road
                 if most_avoided_road in toll_roads:
                     params['avoid_features'].append('tollways')
@@ -355,7 +354,6 @@ async def heyroute(payload: TranscriptRequest, user_id: str=Header(None, alias='
                     params['avoid_roads'].append(most_avoided_road)
                     state.current_route_params['avoid_roads'].append(most_avoided_road)
             elif state.pending_preference == 'familiarity':
-                most_used_road = await load_most_used_road(user_id, destination)
                 preference_value = most_used_road
                 road = most_used_road
             else:
@@ -376,14 +374,12 @@ async def heyroute(payload: TranscriptRequest, user_id: str=Header(None, alias='
                 destination = state.semantic_context['destination_label']
             else:
                 destination = state.final_gpt_response['destination']
+            most_avoided_road, most_used_road, most_preferred_option = await check_user_preferences(db, user_id, destination)
             if state.pending_preference == 'route_option':
-                most_preferred_option = await load_most_preferred_option(user_id, destination)
                 preference_value = most_preferred_option
             elif state.pending_preference == 'avoid':
-                most_avoided_road = await load_most_avoided_road(user_id, destination)
                 preference_value = most_avoided_road
             elif state.pending_preference == 'familiarity':
-                most_used_road = await load_most_used_road(user_id, destination)
                 preference_value = most_used_road
             else:
                 pass

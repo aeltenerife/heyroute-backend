@@ -20,7 +20,7 @@ import numpy as np
 from typing import List
 from adapters.adapter import APIAdapter
 from adapters.openrouteservice_adapter import extract_via_road, sample_smartly, get_road_polygon
-from db import load_polygons, store_polygons
+from db_utils import load_polygons, store_polygons
 from shapely.geometry import Point
 
 # --- Routing Preference Mapping ---
@@ -93,12 +93,12 @@ class MapboxDirectionsAdapter(APIAdapter):
         points_per_road = min(20, 50 // len(avoid_roads)) if len(avoid_roads) > 0 else 20
         
         for road in avoid_roads:
-            poly_data = load_polygons(road)
+            poly_data = await load_polygons(road)
             if not poly_data:
                 print(f"[Mapbox Adapter] Polygons for {road} not found in DB. Fetching from OSM...")
                 geom = await get_road_polygon(self.client, road)
                 if geom:
-                    store_polygons(road, geom)
+                    await store_polygons(road, geom)
                     poly_data = geom
                 else:
                     print(f"[Mapbox Adapter] Could not fetch geometry for {road}. Skipping exclusion.")
