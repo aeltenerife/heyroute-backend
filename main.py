@@ -213,3 +213,13 @@ async def process_voice_activity(
 		raise HTTPException(status_code=500, detail=f"Unable to connect to the ASR server: {str(exc)}")
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"Unable to process the audio file: {str(e)}")
+
+from routers.tts import router as tts_router
+from routers.manual_nav import router as manual_nav_router
+from routers.location import router as location_router
+from routers.legacy_model import router as legacy_model_router
+
+app.include_router(tts_router, prefix="/api/tts", tags=["TTS"])
+app.include_router(manual_nav_router, prefix="/api/navigation", tags=["Manual Navigation"])
+app.include_router(location_router, prefix="/api/location", tags=["Location"])
+app.include_router(legacy_model_router, tags=["Legacy Model"])
