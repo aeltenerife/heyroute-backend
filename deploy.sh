@@ -21,7 +21,7 @@ apt install -y python3 python3-pip python3-venv python3-dev \
 echo ""
 BRANCH_NAME="task/integration-into-prod-server"
 echo "[2/7] Cloning heyroute-backend repo ($BRANCH_NAME branch)..."
-cd /root
+cd heyroute-amiel
 if [ -d "heyroute-backend" ]; then
     echo "  → heyroute-backend directory already exists, pulling latest..."
     cd heyroute-backend
