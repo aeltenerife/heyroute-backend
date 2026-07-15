@@ -19,15 +19,15 @@ apt install -y python3 python3-pip python3-venv python3-dev \
 
 # --- Step 2: Clone the repo ---
 echo ""
-echo "[2/7] Cloning heyroute-backend repo (main branch)..."
+echo "[2/7] Cloning heyroute-backend repo..."
 cd /root
 if [ -d "heyroute-backend" ]; then
     echo "  → heyroute-backend directory already exists, pulling latest..."
     cd heyroute-backend
     git fetch --all
-    git checkout main
-    git reset --hard origin/main
-    git pull origin main
+    git checkout task/integration-into-prod-server
+    git reset --hard origin/task/integration-into-prod-server
+    git pull origin task/integration-into-prod-server
 else
     git clone -b main https://github.com/aeltenerife/heyroute-backend.git
     cd heyroute-backend
