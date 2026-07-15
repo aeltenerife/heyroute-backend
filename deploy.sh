@@ -24,7 +24,8 @@ echo "[2/7] Cloning heyroute-backend repo ($BRANCH_NAME branch)..."
 cd /root
 if [ -d "heyroute-backend" ]; then
     echo "  → heyroute-backend directory already exists, pulling latest..."
-    cd heyroute-backend
+    cd heyroute-amiel/heyroute-backend
+    git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
     git fetch --all
     git checkout $BRANCH_NAME
     git reset --hard origin/$BRANCH_NAME
