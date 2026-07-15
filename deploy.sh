@@ -137,8 +137,8 @@ NGINXEOF
 
 ln -sf /etc/nginx/sites-available/heyroute /etc/nginx/sites-enabled/
 nginx -t
-systemctl reload nginx
-echo "  → Nginx configured and reloaded"
+systemctl restart nginx
+echo "  → Nginx configured and restarted"
 
 # --- Step 7: Verify ---
 echo ""
