@@ -120,10 +120,10 @@ async def process_voice_activity(
 				transcription_data = asr_response.json()
 				user_text = transcription_data.get("text", "").strip()
 			except Exception:
-				import re
-				match = re.search(r'"text"\s*:\s*"([^"]*)"', asr_response.text)
-				if match:
-					user_text = match.group(1).strip()
+				import json_repair
+				transcription_data = json_repair.loads(asr_response.text)
+				if isinstance(transcription_data, dict):
+					user_text = transcription_data.get("text", "").strip()
 				else:
 					raise HTTPException(status_code=500, detail=f"ASR Server returned invalid format: {asr_response.text}")
 

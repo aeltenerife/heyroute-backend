@@ -44,7 +44,8 @@ async def detect_intent(latest_input, mode, conversation_history, semantic_conte
     else:
         pass
     try:
-        parsed = json.loads(extract_json(raw_intents))
+        import json_repair
+        parsed = json_repair.loads(extract_json(raw_intents))
         print(f'[INTENT] Detected: {parsed}')
         return (parsed, intent_detect_latency)
     except Exception as e:
