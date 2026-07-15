@@ -38,7 +38,7 @@ fi
 # --- Step 3: Python virtual environment ---
 echo ""
 echo "[3/7] Setting up Python virtual environment..."
-cd /root/heyroute-backend
+cd /root/heyroute-amiel/heyroute-backend
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
@@ -47,8 +47,8 @@ pip install -r requirements.txt
 # --- Step 4: Create or update .env file ---
 echo ""
 echo "[4/7] Setting up .env file..."
-ENV_FILE="/root/heyroute-backend/.env"
-TEMPLATE_FILE="/root/heyroute-backend/template.env"
+ENV_FILE="/root/heyroute-amiel/heyroute-backend/.env"
+TEMPLATE_FILE="/root/heyroute-amiel/heyroute-backend/template.env"
 
 if [ ! -f "$ENV_FILE" ]; then
     echo "  → .env file not found on server, initializing from template..."
@@ -92,9 +92,9 @@ After=network.target
 
 [Service]
 User=root
-WorkingDirectory=/root/heyroute-backend
-Environment="PATH=/root/heyroute-backend/venv/bin"
-ExecStart=/root/heyroute-backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+WorkingDirectory=/root/heyroute-amiel/heyroute-backend
+Environment="PATH=/root/heyroute-amiel/heyroute-backend/venv/bin"
+ExecStart=/root/heyroute-amiel/heyroute-backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
 Restart=always
 RestartSec=5
 StandardOutput=journal
