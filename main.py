@@ -457,8 +457,12 @@ from routers.tts import router as tts_router
 from routers.manual_nav import router as manual_nav_router
 from routers.location import router as location_router
 from routers.trip import router as trip_router
+from routers.history import router as history_router
+from routers.places import router as places_router
 
 app.include_router(tts_router, prefix="/api/tts", tags=["TTS"])
 app.include_router(manual_nav_router, prefix="/api/navigation", tags=["Manual Navigation"])
 app.include_router(location_router, prefix="/api/location", tags=["Location"])
 app.include_router(trip_router, tags=["Trip Management"])
+app.include_router(history_router, prefix="/api/history", tags=["Trip History"])
+app.include_router(places_router, prefix="/api/places", tags=["Saved Places"])

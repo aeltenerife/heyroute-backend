@@ -33,5 +33,6 @@ class SavedPlace(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), index=True)
     label = Column(String)
+    location = Column(String)
     latitude = Column(Float)
     longitude = Column(Float)
