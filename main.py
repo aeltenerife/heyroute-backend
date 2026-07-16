@@ -80,8 +80,17 @@ async def process_voice_activity(
 		# Read the uploaded audio file
 		audio_bytes = await audio_file.read()
 
-		# Run the raw audio through the VAD filter utility
-		clean_audio_bytes = apply_vad_filter(audio_bytes)
+		# Decode the audio to 16kHz Mono PCM using pydub
+		try:
+			from pydub import AudioSegment
+			audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes))
+			audio_segment = audio_segment.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+			pcm_data = audio_segment.raw_data
+		except Exception as e:
+			raise HTTPException(status_code=400, detail=f"Failed to decode audio: {str(e)}")
+
+		# Run the raw PCM audio through the VAD filter utility
+		clean_audio_bytes = apply_vad_filter(pcm_data, sample_rate=16000)
 
 		# Convert the cleaned audio bytes to a WAV format for ASR processing
 		wav_io = io.BytesIO()
