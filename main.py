@@ -154,7 +154,7 @@ async def process_voice_activity(
 		current_turn = state.increment_turn()
 		user_input = user_text
 		if not user_input:
-			return {'heyroute': "I didn't catch that. Could you say it again?", 'history': state.conversation_history, 'turn_number': current_turn, 'intents': {}}
+			return {'heyroute': "I didn't catch that. Could you say it again?", 'heyroute_response': "I didn't catch that. Could you say it again?", 'history': state.conversation_history, 'turn_number': current_turn, 'intents': {}}
 		else:
 			pass
 		state.conversation_history.append({'role': 'user', 'content': user_input})
@@ -172,12 +172,12 @@ async def process_voice_activity(
 			prompt = await build_gpt_prompt(SYSTEM_PROMPT, CLARIFICATIONS_PROMPT, f'The conversation so far:\n' + '\n'.join((f"User: {m['content']}" if m['role'] == 'user' else f"Assistant: {m['content']}" for m in state.conversation_history)) + f'\n\nLatest user message: {user_input}')
 			response, gpt_latency = await process_with_gpt(prompt)
 			state.conversation_history.append({'role': 'assistant', 'content': response})
-			return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'gpt_latency': gpt_latency, 'user_id': user_id, 'session_id': session_id}
+			return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'gpt_latency': gpt_latency, 'user_id': user_id, 'session_id': session_id}
 		elif intents.get('cancellation'):
 			response = "Okay, I've cancelled your trip. Let me know if you'd like to start a new one later."
 			state.conversation_history.append({'role': 'assistant', 'content': response})
 			state.clear_trip_context()
-			return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id, 'navigation_started': False}
+			return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id, 'navigation_started': False}
 		elif intents.get('generate_routes') or intents.get('trip_changes'):
 			final_response = ''
 			if intents.get('trip_changes'):
@@ -249,7 +249,7 @@ async def process_voice_activity(
 				if not origin_coords or not destination_coords:
 					response = "I couldn't find your destination. Could you be more specific?"
 					state.conversation_history.append({'role': 'assistant', 'content': response})
-					return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'user_id': user_id, 'session_id': session_id}
+					return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'user_id': user_id, 'session_id': session_id}
 				else:
 					pass
 				avoid_roads = []
@@ -279,17 +279,17 @@ async def process_voice_activity(
 						state.pending_preference = 'route_option'
 						response = f'You usually take the {most_preferred_option} route for this trip. Do you want me to use the {most_preferred_option} route?'
 						state.conversation_history.append({'role': 'assistant', 'content': response})
-						return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'geocode_latency': geocode_latency, 'user_id': user_id, 'session_id': session_id}
+						return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'geocode_latency': geocode_latency, 'user_id': user_id, 'session_id': session_id}
 					elif not avoid_input and most_avoided_road:
 						state.pending_preference = 'avoid'
 						response = f'You usually avoid {most_avoided_road} on this trip. Do you want me to avoid it again?'
 						state.conversation_history.append({'role': 'assistant', 'content': response})
-						return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'geocode_latency': geocode_latency, 'user_id': user_id, 'session_id': session_id}
+						return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'geocode_latency': geocode_latency, 'user_id': user_id, 'session_id': session_id}
 					elif most_used_road:
 						state.pending_preference = 'familiarity'
 						response = f'You usually take the route {most_used_road}. Do you want me to use it again?'
 						state.conversation_history.append({'role': 'assistant', 'content': response})
-						return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'geocode_latency': geocode_latency, 'user_id': user_id, 'session_id': session_id}
+						return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'geocode_latency': geocode_latency, 'user_id': user_id, 'session_id': session_id}
 					else:
 						pass
 				else:
@@ -308,7 +308,7 @@ async def process_voice_activity(
 			except (json.JSONDecodeError, TypeError) as e:
 				response = "I'm sorry, I couldn't understand the travel details. Could you please clarify?"
 				state.conversation_history.append({'role': 'assistant', 'content': response})
-				return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'user_id': user_id, 'session_id': session_id}
+				return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'final_json_latency': final_json_latency, 'user_id': user_id, 'session_id': session_id}
 			else:
 				pass
 			finally:
@@ -409,11 +409,11 @@ async def process_voice_activity(
 
 				state.navigation_started = True
 				state.conversation_history.append({'role': 'assistant', 'content': response})
-				return {'heyroute': response, 'preferences': {'route_option': route_option, 'avoid_list': avoid_list, 'major_road': major_road}, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'navigation_started': True, 'route': primary_route, 'alternatives': alternatives, 'user_id': user_id, 'session_id': session_id}
+				return {'heyroute': response, 'heyroute_response': response, 'preferences': {'route_option': route_option, 'avoid_list': avoid_list, 'major_road': major_road}, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'navigation_started': True, 'route': primary_route, 'alternatives': alternatives, 'user_id': user_id, 'session_id': session_id}
 			else:
 				response = "I still don't have enough details to start navigation."
 				state.conversation_history.append({'role': 'assistant', 'content': response})
-				return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
+				return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
 		elif intents.get('request_alternates') and state.routes_data:
 			if state.navigation_started:
 				params = state.current_route_params
@@ -427,7 +427,7 @@ async def process_voice_activity(
 				pass
 			response = await format_alternates_response(route_summaries)
 			state.conversation_history.append({'role': 'assistant', 'content': response})
-			return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
+			return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
 		elif intents.get('select_route') and state.routes_data:
 			select_route_prompt = [{'role': 'system', 'content': 'Identify if the user selected a route among alternates.'}, {'role': 'user', 'content': f'The conversation so far:\n' + '\n'.join((f"User: {m['content']}" if m['role'] == 'user' else f"Assistant: {m['content']}" for m in state.conversation_history[1:])) + f'\n\nLatest user message: {user_input}\n\nRespond strictly in JSON as:\n{{ "route_select": <number> or null }}'}]
 			route_select_raw, gpt_latency = await process_with_gpt(select_route_prompt)
@@ -448,24 +448,24 @@ async def process_voice_activity(
 					route_summary = {'origin': state.final_gpt_response.get('origin'), 'destination': state.final_gpt_response.get('destination'), 'option': state.current_route_params.get('option'), 'via': selected_route.get('via'), 'distance': selected_route.get('distance'), 'duration': selected_route.get('duration')}
 					response = await format_heyroute_response(route_summary)
 					state.conversation_history.append({'role': 'assistant', 'content': response})
-					return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'gpt_latency': gpt_latency, 'route_preview': True, 'route': state.primary_route, 'alternatives': alternatives, 'user_id': user_id, 'session_id': session_id}
+					return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'gpt_latency': gpt_latency, 'route_preview': True, 'route': state.primary_route, 'alternatives': alternatives, 'user_id': user_id, 'session_id': session_id}
 				else:
 					response = 'Switching to the selected route now.'
 					state.conversation_history.append({'role': 'assistant', 'content': response})
-					return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'navigation_started': True, 'switch_route': True, 'route': state.primary_route, 'alternatives': alternatives}
+					return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'navigation_started': True, 'switch_route': True, 'route': state.primary_route, 'alternatives': alternatives}
 			else:
 				response = "I couldn't understand which route you selected. Please specify the route number clearly."
 				state.conversation_history.append({'role': 'assistant', 'content': response})
-				return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
+				return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
 		elif intents.get('start_new_trip'):
 			response = 'To start a new trip, please cancel the current one first. Do you want me to cancel the current trip?'
 			state.conversation_history.append({'role': 'assistant', 'content': response})
-			return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
+			return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
 		else:
 			pass
 		response = "I'm sorry, I don't know that one."
 		state.conversation_history.append({'role': 'assistant', 'content': response})
-		return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
+		return {'heyroute': response, 'heyroute_response': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'user_id': user_id, 'session_id': session_id}
 
 	except httpx.RequestError as exc:
 		raise HTTPException(status_code=500, detail=f"Unable to connect to the ASR server: {str(exc)}")
@@ -480,6 +480,7 @@ from routers.history import router as history_router
 from routers.places import router as places_router
 
 app.include_router(tts_router, prefix="/api/tts", tags=["TTS"])
+app.include_router(tts_router, prefix="/asr", tags=["TTS Legacy"])
 app.include_router(manual_nav_router, prefix="/api/navigation", tags=["Manual Navigation"])
 app.include_router(location_router, prefix="/api/location", tags=["Location"])
 app.include_router(trip_router, tags=["Trip Management"])

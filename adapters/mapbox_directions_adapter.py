@@ -19,8 +19,8 @@ import polyline
 import numpy as np
 from typing import List
 from adapters.adapter import APIAdapter
-from adapters.openrouteservice_adapter import extract_via_road, sample_smartly, get_road_polygon
-from db_utils import load_polygons, store_polygons
+from adapters.openrouteservice_adapter import extract_via_road, sample_smartly
+from db_utils import load_road_points, store_road_points
 from shapely.geometry import Point
 
 # --- Routing Preference Mapping ---
@@ -78,60 +78,119 @@ class MapboxDirectionsAdapter(APIAdapter):
         except Exception as e:
             print(f"Reverse Geocoding error for {lat}, {lng}: {e}")
 
+    async def _get_road_centerline_points(self, road_name: str) -> List[List[float]]:
+        bbox = "14.402,120.917,14.810,121.150"
+        query = f"""
+        [out:json][timeout:25];
+        way["highway"]["name"~"{road_name}", i]({bbox});
+        out geom;
+        """
+        endpoints = [
+            "https://overpass-api.de/api/interpreter",
+            "https://lz4.overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter"
+        ]
+        headers = {"User-Agent": "HeyRouteBackend/1.0", "Accept": "*/*"}
+        
+        for endpoint in endpoints:
+            try:
+                resp = await self.client.post(endpoint, data={"data": query}, headers=headers, timeout=30.0)
+                if resp.status_code != 200:
+                    print(f"[Mapbox Adapter] Overpass API {endpoint} returned {resp.status_code}. Trying next...")
+                    continue
+                
+                data = resp.json()
+                
+                # Use shapely to merge unordered ways into a continuous line
+                from shapely.geometry import LineString
+                from shapely.ops import linemerge
+                
+                lines = []
+                for elem in data.get("elements", []):
+                    if elem["type"] == "way" and "geometry" in elem:
+                        way_coords = [[pt["lon"], pt["lat"]] for pt in elem["geometry"]]
+                        if len(way_coords) >= 2:
+                            lines.append(LineString(way_coords))
+                
+                if not lines:
+                    print(f"[Mapbox Adapter] No geometry found for {road_name} on {endpoint}")
+                    return []
+                    
+                merged = linemerge(lines)
+                return self._sample_points_from_geom(merged, 50)
+                
+            except Exception as e:
+                print(f"[Mapbox Adapter] Error fetching centerline from {endpoint}: {e}")
+                
+        print(f"[Mapbox Adapter] All Overpass API endpoints failed for {road_name}")
+        return []
+
+    def _sample_points_from_geom(self, geom, num_points: int) -> List[List[float]]:
+        """Samples evenly spaced points along a LineString or MultiLineString."""
+        from shapely.geometry import LineString, MultiLineString
+        
+        if isinstance(geom, LineString):
+            if geom.length == 0:
+                return []
+            distances = [i * (geom.length / max(1, num_points - 1)) for i in range(num_points)]
+            points = [geom.interpolate(d) for d in distances]
+            return [[p.x, p.y] for p in points]
+            
+        elif isinstance(geom, MultiLineString):
+            total_length = geom.length
+            if total_length == 0:
+                return []
+            coords = []
+            for line in geom.geoms:
+                # Distribute points proportionally among segments
+                segment_points = max(2, int(round((line.length / total_length) * num_points)))
+                dists = [i * (line.length / max(1, segment_points - 1)) for i in range(segment_points)]
+                coords.extend([[p.x, p.y] for p in [line.interpolate(d) for d in dists]])
+            return coords
+            
+        return []
+
     # ---------- Helper for Road Avoidance ----------
     async def _get_exclusion_points(self, avoid_roads: List[str]) -> List[str]:
         """
         Takes a list of road names to avoid.
-        Loads their polygons (fetching via OSM if not cached), and samples points
-        along them to create Mapbox `point(lng lat)` exclusion strings.
-        Mapbox allows up to 50 point exclusions. We'll sample up to ~10-15 per road.
+        Loads their pre-sampled, evenly distributed points (fetching via OSM if not cached),
+        and creates Mapbox `point(lng lat)` exclusion strings.
+        Mapbox allows up to 50 point exclusions total.
         """
         if not avoid_roads:
             return []
             
         points_to_exclude = []
-        points_per_road = min(20, 50 // len(avoid_roads)) if len(avoid_roads) > 0 else 20
-        
+        # Max 50 points total across all avoided roads
+        points_per_road = max(1, 50 // len(avoid_roads))
+
         for road in avoid_roads:
-            poly_data = await load_polygons(road)
-            if not poly_data:
-                print(f"[Mapbox Adapter] Polygons for {road} not found in DB. Fetching from OSM...")
-                geom = await get_road_polygon(self.client, road)
-                if geom:
-                    await store_polygons(road, geom)
-                    poly_data = geom
+            cached_points = await load_road_points(road)
+            if not cached_points:
+                print(f"[Mapbox Adapter] Centerline points for {road} not found in DB. Fetching from OSM...")
+                cached_points = await self._get_road_centerline_points(road)
+                if cached_points:
+                    await store_road_points(road, cached_points)
                 else:
                     print(f"[Mapbox Adapter] Could not fetch geometry for {road}. Skipping exclusion.")
                     continue
             
-            # Extract points from the polygon boundaries or centroids
-            if poly_data:
+            if cached_points:
                 try:
-                    if hasattr(poly_data, 'geoms'):
-                        geoms = list(poly_data.geoms)
-                    else:
-                        geoms = [poly_data]
-                    
-                    # Sort by area or length to prioritize main segments
-                    geoms.sort(key=lambda g: g.area, reverse=True)
-                    
-                    sampled_count = 0
-                    for geom in geoms:
-                        if sampled_count >= points_per_road:
-                            break
-                        
-                        # Get exterior coordinates
-                        coords = list(geom.exterior.coords)
-                        if len(coords) > 0:
-                            step = max(1, len(coords) // (points_per_road - sampled_count))
-                            for i in range(0, len(coords), step):
-                                if sampled_count >= points_per_road:
-                                    break
-                                lng, lat = coords[i]
-                                points_to_exclude.append(f"point({lng} {lat})")
-                                sampled_count += 1
+                    # The cache now holds pre-sampled points directly (up to 50 points).
+                    # We just need to take up to `points_per_road` evenly from it.
+                    if len(cached_points) > 0:
+                        if len(cached_points) <= points_per_road:
+                            sampled = cached_points
+                        else:
+                            indices = [int(i * (len(cached_points) - 1) / (points_per_road - 1)) for i in range(points_per_road)]
+                            sampled = [cached_points[i] for i in indices]
+                        for pt in sampled:
+                            lng, lat = pt
+                            points_to_exclude.append(f"point({lng} {lat})")
                 except Exception as e:
-                    print(f"[Mapbox Adapter] Error extracting points from polygon for {road}: {e}")
+                    print(f"[Mapbox Adapter] Error extracting points for {road}: {e}")
                     
         return points_to_exclude
 

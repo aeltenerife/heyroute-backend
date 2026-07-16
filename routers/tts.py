@@ -28,13 +28,11 @@ async def speak(req: TTSRequest):
     Returns an audio stream in MP3 format that can be played on the client side.
     """
 
-    text = req.text
-    mp3_fp = io.BytesIO()
-    communicate = edge_tts.Communicate(text=text, voice=VOICE)
+    communicate = edge_tts.Communicate(text=req.text, voice=VOICE)
 
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            mp3_fp.write(chunk["data"])
+    async def generate():
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                yield chunk["data"]
 
-    mp3_fp.seek(0)
-    return StreamingResponse(mp3_fp, media_type="audio/mpeg")
+    return StreamingResponse(generate(), media_type="audio/mpeg")
