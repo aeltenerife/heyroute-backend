@@ -74,7 +74,9 @@ async def process_voice_activity(
 	db: AsyncSession = Depends(get_db)
 	):
 
-	print(f"Processing audio file: {audio_file.filename} for user: {x_user_id}, session: {x_session_id}")
+	user_id = x_user_id
+	session_id = x_session_id
+	print(f"Processing audio file: {audio_file.filename} for user: {user_id}, session: {session_id}")
 	
 	try:
 		# Read the uploaded audio file
