@@ -77,6 +77,7 @@ set_env_var() {
 
 set_env_var "QWEN_API_URL" "http://172.16.3.213:80/v1/chat/completions"
 set_env_var "QWEN_MODEL_NAME" "Qwen/Qwen2.5-7B-Instruct-AWQ"
+set_env_var "REMOTE_ASR_URL" "http://172.16.3.217:80"
 set_env_var "PORT" "8000"
 set_env_var "HOST" "127.0.0.1"
 
