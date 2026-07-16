@@ -21,7 +21,7 @@ import time
 from session_manager import SESSIONS, SessionState
 from routing_engine import detect_intent, resolve_semantic_places, generate_route_and_response
 from legacy_llm_gpt import process_with_gpt
-from helpers import build_gpt_prompt, normalize_road_name, extract_json, toll_roads
+from helpers import build_gpt_prompt, normalize_road_name, extract_json, toll_roads, resolve_collisions
 from prompts import SYSTEM_PROMPT, CLARIFICATIONS_PROMPT, TRIP_CHANGES_PROMPT, SEMANTICS_PROMPT
 from models import TripHistory
 from datetime import datetime, timezone
