@@ -212,9 +212,9 @@ async def process_voice_activity(
 				if state.semantic_context['destination_known']:
 					destination_coords = state.semantic_context['destination_value']
 					state.final_gpt_response['destination'] = state.semantic_context['destination_label']
-					destination = state.final_gpt_response['destination']
+					destination = state.final_gpt_response.get('destination')
 				else:
-					destination = state.final_gpt_response['destination']
+					destination = state.final_gpt_response.get('destination')
 					task_mapping['destination'] = len(tasks)
 					tasks.append(adapter.geocode(destination))
 				via_coords = []
@@ -340,7 +340,7 @@ async def process_voice_activity(
 				road = most_used_road
 			else:
 				pass
-			state.routes_data, state.primary_route, response = await generate_route_and_response(x_user_id, x_session_id, params['origin'], params['destination'], params['option'], params['via'], params['avoid_roads'], params['avoid_features'], state.final_gpt_response, state.navigation_started, road)
+			state.routes_data, state.primary_route, response = await generate_route_and_response(x_user_id, x_session_id, params.get('origin'), params.get('destination'), params.get('option'), params.get('via'), params.get('avoid_roads'), params.get('avoid_features'), state.final_gpt_response, state.navigation_started, road)
 			state.route_created = True
 			state.conversation_history.append({'role': 'assistant', 'content': response.get('heyroute')})
 			response['intent_detect_latency'] = intent_detect_latency
@@ -355,7 +355,7 @@ async def process_voice_activity(
 			if state.semantic_context['destination_known']:
 				destination = state.semantic_context['destination_label']
 			else:
-				destination = state.final_gpt_response['destination']
+				destination = state.final_gpt_response.get('destination')
 			most_avoided_road, most_used_road, most_preferred_option = await check_user_preferences(db, x_user_id, destination)
 			if state.pending_preference == 'route_option':
 				preference_value = most_preferred_option
@@ -365,7 +365,7 @@ async def process_voice_activity(
 				preference_value = most_used_road
 			else:
 				pass
-			state.routes_data, state.primary_route, response = await generate_route_and_response(x_user_id, x_session_id, params['origin'], params['destination'], params['option'], params['via'], params['avoid_roads'], params['avoid_features'], state.final_gpt_response, state.navigation_started)
+			state.routes_data, state.primary_route, response = await generate_route_and_response(x_user_id, x_session_id, params.get('origin'), params.get('destination'), params.get('option'), params.get('via'), params.get('avoid_roads'), params.get('avoid_features'), state.final_gpt_response, state.navigation_started)
 			state.route_created = True
 			state.conversation_history.append({'role': 'assistant', 'content': response.get('heyroute')})
 			response['intent_detect_latency'] = intent_detect_latency
@@ -395,8 +395,8 @@ async def process_voice_activity(
 				
 				new_trip = TripHistory(
 					user_id=user_id,
-					origin_coords=state.current_route_params["origin"],
-					destination_coords=state.current_route_params["destination"],
+					origin_coords=state.current_route_params.get("origin"),
+					destination_coords=state.current_route_params.get("destination"),
 					via_road_name=major_road,
 					route_option=route_option,
 					avoid_roads=avoid_list,
@@ -445,7 +445,7 @@ async def process_voice_activity(
 				state.primary_route = selected_route
 				alternatives = [r for r in state.routes_data if r != state.primary_route]
 				if not state.navigation_started:
-					route_summary = {'origin': state.final_gpt_response['origin'], 'destination': state.final_gpt_response['destination'], 'option': state.current_route_params['option'], 'via': selected_route.get('via'), 'distance': selected_route.get('distance'), 'duration': selected_route.get('duration')}
+					route_summary = {'origin': state.final_gpt_response.get('origin'), 'destination': state.final_gpt_response.get('destination'), 'option': state.current_route_params.get('option'), 'via': selected_route.get('via'), 'distance': selected_route.get('distance'), 'duration': selected_route.get('duration')}
 					response = await format_heyroute_response(route_summary)
 					state.conversation_history.append({'role': 'assistant', 'content': response})
 					return {'heyroute': response, 'history': state.conversation_history, 'turn_number': current_turn, 'intents': intents, 'intent_detect_latency': intent_detect_latency, 'gpt_latency': gpt_latency, 'route_preview': True, 'route': state.primary_route, 'alternatives': alternatives, 'user_id': user_id, 'session_id': session_id}
