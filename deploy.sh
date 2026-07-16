@@ -94,7 +94,7 @@ After=network.target
 [Service]
 User=root
 WorkingDirectory=/root/heyroute-amiel/heyroute-backend
-Environment="PATH=/root/heyroute-amiel/heyroute-backend/venv/bin"
+Environment="PATH=/root/heyroute-amiel/heyroute-backend/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ExecStart=/root/heyroute-amiel/heyroute-backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
 Restart=always
 RestartSec=5
